@@ -25,7 +25,7 @@ fileInput.addEventListener('change', async (e) => {
     try {
 
         const response = await fetch(
-            'http://localhost:3000/upload',
+            'https://gestor-facturas-jqbj.onrender.com/upload',
             {
                 method: 'POST',
                 body: formData
