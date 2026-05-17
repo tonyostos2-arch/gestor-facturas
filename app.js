@@ -20,7 +20,7 @@ fileInput.addEventListener('change', async (e) => {
 
     const formData = new FormData();
 
-    formData.append('image', file);
+    formData.append('image', file, file.name);
 
     try {
 
