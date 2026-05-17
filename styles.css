@@ -1,0 +1,45 @@
+body {
+    margin: 0;
+    padding: 20px;
+    background: #f1f5f9;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    padding: 20px;
+    border-radius: 14px;
+}
+
+h1 {
+    text-align: center;
+}
+
+.camera-btn {
+    display: block;
+    background: #2563eb;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+.status {
+    background: #e2e8f0;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}

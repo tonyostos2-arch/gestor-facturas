@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Facturas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-container">
+
+    <h1>Gestor Inteligente 🤖</h1>
+
+    <label class="camera-btn" for="invoice-file">
+        📷 Tomar Foto
+    </label>
+
+    <input
+        type="file"
+        id="invoice-file"
+        accept="image/*"
+        capture="environment"
+        hidden
+    >
+
+    <div id="status" class="status">
+        Esperando imagen...
+    </div>
+
+    <label>Número Factura</label>
+    <input type="text" id="invoice-number">
+
+    <label>Cliente</label>
+    <input type="text" id="invoice-client">
+
+    <label>Proveedor</label>
+    <input type="text" id="invoice-provider">
+
+    <label>Monto</label>
+    <input type="text" id="invoice-amount">
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
