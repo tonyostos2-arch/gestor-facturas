@@ -11,38 +11,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        statusDiv.innerText = "Leyendo factura...";
+        statusDiv.innerText = "Procesando factura...";
 
-        // convertir imagen a base64
-        const toBase64 = (file) =>
-            new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-            });
+        try {
 
-        const base64 = await toBase64(file);
+            // convertir a base64
+            const toBase64 = (file) =>
+                new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                });
 
-        // enviar a TU backend en Render
-        const response = await fetch("https://gestor-facturas-jqbj.onrender.com/ocr", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ image: base64 })
-        });
+            const base64 = await toBase64(file);
 
-        const data = await response.json();
+            // enviar a Render
+            const response = await fetch(
+                "https://gestor-facturas-jqbj.onrender.com/ocr",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ image: base64 })
+                }
+            );
 
-        if (!data.text) {
-            statusDiv.innerText = "No se pudo leer la factura";
-            return;
+            const data = await response.json();
+
+            console.log("RESPUESTA BACKEND:", data);
+
+            if (!data.text) {
+                statusDiv.innerText = "No se detectó texto";
+                return;
+            }
+
+            statusDiv.innerText = "Factura leída";
+
+            procesarTexto(data.text);
+
+        } catch (err) {
+            console.error(err);
+            statusDiv.innerText = "Error OCR";
         }
-
-        statusDiv.innerText = "Factura leída correctamente";
-
-        procesarTexto(data.text);
     });
 
     function procesarTexto(text) {

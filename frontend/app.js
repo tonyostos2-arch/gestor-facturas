@@ -1,127 +1,82 @@
-const fileInput = document.getElementById('invoice-file');
+document.addEventListener('DOMContentLoaded', () => {
 
-const statusDiv = document.getElementById('status');
+    const fileInput = document.getElementById('invoice-file');
+    const statusDiv = document.getElementById('status');
+    const clientInput = document.getElementById('invoice-client');
+    const providerInput = document.getElementById('invoice-provider');
+    const amountInput = document.getElementById('invoice-amount');
 
-const numberInput = document.getElementById('invoice-number');
+    fileInput.addEventListener('change', async (e) => {
 
-const clientInput = document.getElementById('invoice-client');
+        const file = e.target.files[0];
+        if (!file) return;
 
-const providerInput = document.getElementById('invoice-provider');
+        statusDiv.innerText = "Procesando factura...";
 
-const amountInput = document.getElementById('invoice-amount');
+        try {
 
-fileInput.addEventListener('change', async (e) => {
+            // convertir a base64
+            const toBase64 = (file) =>
+                new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                });
 
-    const file = e.target.files[0];
+            const base64 = await toBase64(file);
 
-    if (!file) return;
+            // enviar a Render
+            const response = await fetch(
+                "https://gestor-facturas-jqbj.onrender.com/ocr",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ image: base64 })
+                }
+            );
 
-    statusDiv.innerText = 'Procesando imagen...';
+            const data = await response.json();
 
-    const formData = new FormData();
+            console.log("RESPUESTA BACKEND:", data);
 
-    formData.append('image', file);
-
-    try {
-
-        const response = await fetch(
-            'https://gestor-facturas-jqbj.onrender.com/upload',
-            {
-                method: 'POST',
-                body: formData
+            if (!data.text) {
+                statusDiv.innerText = "No se detectó texto";
+                return;
             }
-        );
 
-        const data = await response.json();
+            statusDiv.innerText = "Factura leída";
 
-        console.log(data);
+            procesarTexto(data.text);
 
-        if (!data.success) {
-
-            statusDiv.innerText = 'OCR falló';
-
-            return;
+        } catch (err) {
+            console.error(err);
+            statusDiv.innerText = "Error OCR";
         }
+    });
 
-        statusDiv.innerText = 'Factura procesada';
+    function procesarTexto(text) {
 
-        const texto = data.texto;
+        let cliente = "";
+        let proveedor = "";
+        let monto = "";
 
-        extraerDatos(texto);
+        const t = text.toUpperCase();
 
-    } catch (err) {
+        const c = text.match(/CLIENTE[:\s]+(.*)/i);
+        if (c) cliente = c[1];
 
-        console.error(err);
+        const p = text.match(/(PROVEEDOR|EMISOR)[:\s]+(.*)/i);
+        if (p) proveedor = p[2];
 
-        statusDiv.innerText = 'Error conexión servidor';
+        const m = t.match(/TOTAL[^0-9]*([\d.,]+)/i);
+        if (m) monto = m[1];
+
+        clientInput.value = cliente;
+        providerInput.value = proveedor;
+        amountInput.value = monto;
     }
+
 });
-
-function extraerDatos(texto) {
-
-    const textoMayus = texto.toUpperCase();
-
-    let cliente = '';
-
-    let proveedor = '';
-
-    let monto = '';
-
-    let numeroFactura = '';
-
-    const facturaMatch = texto.match(
-        /FACTURA\\s*(?:NO|NRO|NUMERO|#)?[:\\s-]*([A-Z0-9-]+)/i
-    );
-
-    if (facturaMatch) {
-        numeroFactura = facturaMatch[1];
-    }
-
-    if (textoMayus.includes('MIRACLE')) {
-
-        proveedor = 'LABORATORIO OPTICO MIRACLE SAS';
-
-        const clienteMatch = texto.match(/CLIENTE[:\\s]+(.+)/i);
-
-        if (clienteMatch) {
-            cliente = clienteMatch[1];
-        }
-
-        const montoMatch = texto.match(
-            /TOTAL A PAGAR[^\\d]*([\\d.,]+)/i
-        );
-
-        if (montoMatch) {
-            monto = montoMatch[1];
-        }
-    }
-
-    if (textoMayus.includes('BORA')) {
-
-        proveedor = 'BORA LENS SAS';
-
-        const clienteMatch = texto.match(
-            /ADQUIRIENTE[:\\s]+(.+)/i
-        );
-
-        if (clienteMatch) {
-            cliente = clienteMatch[1];
-        }
-
-        const montoMatch = texto.match(
-            /TOTAL[^\\d]*([\\d.,]+)/i
-        );
-
-        if (montoMatch) {
-            monto = montoMatch[1];
-        }
-    }
-
-    numberInput.value = numeroFactura;
-
-    clientInput.value = cliente;
-
-    providerInput.value = proveedor;
-
-    amountInput.value = monto;
-}

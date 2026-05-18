@@ -3,46 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor Facturas</title>
+    <title>Gestor Inteligente de Facturas</title>
+
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-<div class="app-container">
+    <div class="app-container">
 
-    <h1>Gestor Inteligente 🤖</h1>
+        <header>
+            <h1>Gestor Inteligente 🤖📑</h1>
+        </header>
 
-    <label class="camera-btn" for="invoice-file">
-        📷 Tomar Foto
-    </label>
+        <section class="ocr-section">
 
-    <input
-        type="file"
-        id="invoice-file"
-        accept="image/*"
-        capture="environment"
-        hidden
-    >
+            <h2>Escanear Factura</h2>
 
-    <div id="status" class="status">
-        Esperando imagen...
+            <p class="instruction">
+                Toma una foto de la factura y el sistema extraerá los datos automáticamente.
+            </p>
+
+            <label for="invoice-file" class="btn-camera-trigger">
+                📷 Tomar Foto Factura
+            </label>
+
+            <input type="file"
+                   id="invoice-file"
+                   accept="image/*"
+                   capture="environment"
+                   style="display:none;">
+
+            <div id="status" class="status">
+                Esperando fotografía...
+            </div>
+
+            <div class="form-invoice">
+
+                <label>Cliente:</label>
+                <input type="text" id="invoice-client">
+
+                <label>Proveedor:</label>
+                <input type="text" id="invoice-provider">
+
+                <label>Monto:</label>
+                <input type="text" id="invoice-amount">
+
+                <button id="add-invoice-btn" type="button">
+                    Guardar Factura
+                </button>
+
+            </div>
+
+        </section>
+
+        <hr>
+
+        <section class="lists-section">
+
+            <h2>Historial</h2>
+
+            <select id="filter-client">
+                <option value="todos">Todos</option>
+            </select>
+
+            <h3>Por pagar</h3>
+            <ul id="pending-list"></ul>
+
+            <h3>Pagadas</h3>
+            <ul id="paid-list"></ul>
+
+        </section>
+
     </div>
 
-    <label>Número Factura</label>
-    <input type="text" id="invoice-number">
+    <!-- ========================= -->
+    <!-- 🔥 OCR LOCAL (TESSERACT) -->
+    <!-- ========================= -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
-    <label>Cliente</label>
-    <input type="text" id="invoice-client">
-
-    <label>Proveedor</label>
-    <input type="text" id="invoice-provider">
-
-    <label>Monto</label>
-    <input type="text" id="invoice-amount">
-
-</div>
-
-<script src="app.js"></script>
+    <!-- TU APP -->
+    <script src="app.js"></script>
 
 </body>
 </html>
