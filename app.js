@@ -10,14 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const pendingList = document.getElementById('pending-list');
     const paidList = document.getElementById('paid-list');
 
-    // ⚠️ PON AQUÍ TU API KEY REAL DE OCR.SPACE
+    // 🔑 TU API KEY REAL OCR.SPACE
     const apiKey = "K81593425388957";
 
     let clientes = JSON.parse(localStorage.getItem('auto_clientes')) || [];
     let facturas = JSON.parse(localStorage.getItem('auto_facturas')) || [];
 
     // =========================
-    // 📸 CAPTURA DE IMAGEN
+    // 📸 OCR (BASE64 ESTABLE)
     // =========================
     fileInput.addEventListener('change', async (e) => {
 
@@ -29,15 +29,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
 
-            const formData = new FormData();
-            formData.append('file', file, file.name);
-            formData.append('language', 'spa');
-            formData.append('isOverlayRequired', 'false');
+            // Convertir a base64
+            const toBase64 = (file) =>
+                new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                });
 
-            const response = await fetch('https://api.ocr.space/parse/image', {
-                method: 'POST',
+            const base64Image = await toBase64(file);
+
+            const formData = new FormData();
+            formData.append("base64Image", "data:image/jpeg;base64," + base64Image);
+            formData.append("language", "spa");
+            formData.append("isOverlayRequired", "false");
+
+            const response = await fetch("https://api.ocr.space/parse/image", {
+                method: "POST",
                 headers: {
-                    'apikey': apiKey
+                    "apikey": apiKey
                 },
                 body: formData
             });
@@ -47,21 +58,19 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("OCR RESPONSE:", data);
 
             if (data.IsErroredOnProcessing) {
-                throw new Error(data.ErrorMessage || "Error en OCR");
+                throw new Error(data.ErrorMessage || "Error OCR");
             }
 
-            if (data.ParsedResults && data.ParsedResults.length > 0) {
-
-                const extractedText = data.ParsedResults[0].ParsedText;
-
-                statusDiv.className = "status success";
-                statusDiv.innerText = "Factura leída correctamente";
-
-                procesarTextoFactura(extractedText);
-
-            } else {
-                throw new Error("No se detectó texto en la imagen");
+            if (!data.ParsedResults || data.ParsedResults.length === 0) {
+                throw new Error("Sin texto detectado");
             }
+
+            const text = data.ParsedResults[0].ParsedText;
+
+            statusDiv.className = "status success";
+            statusDiv.innerText = "Factura leída correctamente";
+
+            procesarTextoFactura(text);
 
         } catch (err) {
             console.error(err);
@@ -82,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const texto = text.toUpperCase();
 
-        // 📌 Número de factura (nuevo requisito)
+        // 📌 Número de factura
         const matchFactura = texto.match(/(FACTURA|INVOICE)\s*#?\s*([A-Z0-9-]+)/i);
         if (matchFactura) {
             numeroFactura = matchFactura[2];
@@ -111,8 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         providerInput.value = proveedor;
         amountInput.value = monto;
 
-        // (Opcional) si quieres mostrar número de factura en consola
-        console.log("Factura:", numeroFactura);
+        console.log("Número factura:", numeroFactura);
     }
 
     // =========================
@@ -156,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================
-    // 🔄 HELPERS
+    // 🔄 ACCIONES
     // =========================
     window.cambiarEstadoFactura = (id) => {
         facturas = facturas.map(f =>
