@@ -11,30 +11,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        statusDiv.innerText = "Leyendo imagen...";
+        statusDiv.innerText = "Leyendo factura...";
 
-        try {
+        // convertir imagen a base64
+        const toBase64 = (file) =>
+            new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+            });
 
-            const imageURL = URL.createObjectURL(file);
+        const base64 = await toBase64(file);
 
-            const worker = await Tesseract.createWorker("spa");
+        // enviar a TU backend en Render
+        const response = await fetch("https://gestor-facturas-jqbj.onrender.com/ocr", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ image: base64 })
+        });
 
-            const result = await worker.recognize(imageURL);
+        const data = await response.json();
 
-            const text = result.data.text;
-
-            console.log(text);
-
-            statusDiv.innerText = "Texto extraído correctamente";
-
-            procesarTexto(text);
-
-            await worker.terminate();
-
-        } catch (err) {
-            console.error(err);
-            statusDiv.innerText = "Error leyendo imagen";
+        if (!data.text) {
+            statusDiv.innerText = "No se pudo leer la factura";
+            return;
         }
+
+        statusDiv.innerText = "Factura leída correctamente";
+
+        procesarTexto(data.text);
     });
 
     function procesarTexto(text) {
@@ -42,12 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let cliente = "";
         let proveedor = "";
         let monto = "";
-        let numero = "";
 
         const t = text.toUpperCase();
-
-        const f = t.match(/FACTURA\s*#?\s*([A-Z0-9-]+)/);
-        if (f) numero = f[1];
 
         const c = text.match(/CLIENTE[:\s]+(.*)/i);
         if (c) cliente = c[1];
@@ -62,4 +66,5 @@ document.addEventListener('DOMContentLoaded', () => {
         providerInput.value = proveedor;
         amountInput.value = monto;
     }
+
 });

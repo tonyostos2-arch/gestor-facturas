@@ -1,81 +1,57 @@
-require('dotenv').config();
-
-const express = require('express');
-const cors = require('cors');
-const multer = require('multer');
-const fetch = require('node-fetch');
-const FormData = require('form-data');
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import fetch from "node-fetch";
 
 const app = express();
-
 app.use(cors());
+app.use(bodyParser.json({ limit: "10mb" }));
 
-const upload = multer({
-    storage: multer.memoryStorage()
-});
+const PORT = process.env.PORT || 10000;
 
-app.post('/upload', upload.single('image'), async (req, res) => {
+// 🔑 TU API KEY DE GOOGLE VISION
+const GOOGLE_API_KEY = "AIzaSyD2jDW12zlUeVf21XxK9lwTzMx4H7T5f94";
 
+app.post("/ocr", async (req, res) => {
     try {
 
-        if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                error: 'No image uploaded'
-            });
-        }
-
-        const form = new FormData();
-
-        form.append('file', req.file.buffer, {
-            filename: req.file.originalname
-        });
-
-        form.append('language', 'spa');
-        form.append('isOverlayRequired', 'false');
+        const { image } = req.body;
 
         const response = await fetch(
-            'https://api.ocr.space/parse/image',
+            `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_API_KEY}`,
             {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    apikey: process.env.OCR_API_KEY
+                    "Content-Type": "application/json"
                 },
-                body: form
+                body: JSON.stringify({
+                    requests: [
+                        {
+                            image: {
+                                content: image
+                            },
+                            features: [
+                                { type: "TEXT_DETECTION" }
+                            ]
+                        }
+                    ]
+                })
             }
         );
 
         const data = await response.json();
 
-        if (!data.ParsedResults || !data.ParsedResults[0]) {
-            return res.json({
-                success: false,
-                error: 'OCR failed'
-            });
-        }
+        const text =
+            data.responses?.[0]?.fullTextAnnotation?.text || "";
 
-        const text = data.ParsedResults[0].ParsedText || '';
+        res.json({ text });
 
-        console.log(text);
-
-        return res.json({
-            success: true,
-            texto: text
-        });
-
-    } catch (err) {
-
-        console.error(err);
-
-        return res.status(500).json({
-            success: false,
-            error: 'Server error'
-        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "OCR failed" });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log("Server running on port", PORT);
 });
