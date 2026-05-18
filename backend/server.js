@@ -34,7 +34,7 @@ app.post("/ocr", async (req, res) => {
                 })
             }
         );
-
+console.log(JSON.stringify(data, null, 2));
         const data = await response.json();
 
         const text =
