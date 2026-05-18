@@ -11,11 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        statusDiv.innerText = "Procesando factura...";
+        statusDiv.innerText = "Procesando imagen...";
 
         try {
 
-            // convertir a base64
             const toBase64 = (file) =>
                 new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -26,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const base64 = await toBase64(file);
 
-            // enviar a Render
             const response = await fetch(
                 "https://gestor-facturas-jqbj.onrender.com/ocr",
                 {
@@ -40,20 +38,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
 
-            console.log("RESPUESTA BACKEND:", data);
+            console.log("BACKEND RESPONSE:", data);
 
             if (!data.text) {
                 statusDiv.innerText = "No se detectó texto";
                 return;
             }
 
-            statusDiv.innerText = "Factura leída";
+            statusDiv.innerText = "Factura leída correctamente";
 
             procesarTexto(data.text);
 
         } catch (err) {
             console.error(err);
-            statusDiv.innerText = "Error OCR";
+            statusDiv.innerText = "Error procesando imagen";
         }
     });
 
