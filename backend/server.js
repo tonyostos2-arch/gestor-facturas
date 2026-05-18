@@ -8,7 +8,7 @@ app.use(express.json({ limit: "10mb" }));
 
 const PORT = process.env.PORT || 10000;
 
-// 🔑 PEGA AQUÍ TU API KEY DE GOOGLE VISION
+// 🔑 PEGA TU API KEY AQUÍ
 const GOOGLE_API_KEY = "AIzaSyD2jDW12zlUeVf21XxK9lwTzMx4H7T5f94";
 
 app.post("/ocr", async (req, res) => {
@@ -27,15 +27,21 @@ app.post("/ocr", async (req, res) => {
                 body: JSON.stringify({
                     requests: [
                         {
-                            image: { content: image },
-                            features: [{ type: "TEXT_DETECTION" }]
+                            image: {
+                                content: image
+                            },
+                            features: [
+                                { type: "TEXT_DETECTION" }
+                            ]
                         }
                     ]
                 })
             }
         );
-console.log(JSON.stringify(data, null, 2));
+
         const data = await response.json();
+
+        console.log("VISION RESPONSE:", JSON.stringify(data, null, 2));
 
         const text =
             data.responses?.[0]?.fullTextAnnotation?.text || "";
@@ -43,8 +49,8 @@ console.log(JSON.stringify(data, null, 2));
         res.json({ text });
 
     } catch (err) {
-        console.error(err);
-        res.json({ text: "" });
+        console.error("ERROR BACKEND:", err);
+        res.status(500).json({ text: "" });
     }
 });
 
